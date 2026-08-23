@@ -69,7 +69,8 @@ function ResultPanel({ result, professional, onReset }: { result: DeadlineCalcul
   );
 }
 
-export default function CalculatorApp() {
+export default function CalculatorApp({ edition = 'web' }: { edition?: 'web' | 'android-offline' }) {
+  const offline = edition === 'android-offline';
   const [professional, setProfessional] = useState(false);
   const [view, setView] = useState<'calculator' | 'library'>('calculator');
   const [group, setGroup] = useState<DeadlineGroup>('general');
@@ -113,7 +114,7 @@ export default function CalculatorApp() {
   return (
     <main className="app-shell v11-shell">
       <header className="topbar"><div className="topbar-inner">
-        <button type="button" className="brand" onClick={() => { setView('calculator'); resetFields(); }}><span className="brand-mark">时</span><span><strong>权衡 · 民事法律期限助手</strong><small>每个日期，都能回到现行法条</small></span></button>
+        <button type="button" className="brand" onClick={() => { setView('calculator'); resetFields(); }}><span className="brand-mark">时</span><span><strong>权衡 · 民事法律期限助手</strong><small>{offline ? '规则与计算均在本机运行 · 离线版' : '每个日期，都能回到现行法条'}</small></span></button>
         <div className="top-actions"><div className="view-switch"><button className={view === 'calculator' ? 'active' : ''} onClick={() => setView('calculator')}>期限计算</button><button className={view === 'library' ? 'active' : ''} onClick={() => setView('library')}>规则库</button></div><div className="mode-switch"><button className={!professional ? 'active' : ''} onClick={() => setProfessional(false)}>普通</button><button className={professional ? 'active' : ''} onClick={() => setProfessional(true)}>专业</button></div></div>
       </div></header>
 
@@ -149,7 +150,7 @@ export default function CalculatorApp() {
       )}
 
       <section className="case-evidence"><div className="evidence-heading"><div><p className="eyebrow">真实裁判校验</p><h2>案例只用于验证规则边界</h2></div><p>以下案例均来自人民法院公开页面；系统不自行补写案号，也不把个案裁判当作普遍法条。</p></div><div className="evidence-grid">{CASE_REFERENCES.map((item) => <a className="evidence-card" key={item.title} href={item.url} target="_blank" rel="noreferrer"><span className="evidence-authority">{item.authority}</span><h3>{item.title}</h3>{item.docket ? <code>{item.docket}</code> : null}<p>{item.point}</p><div><strong>产品边界</strong><span>{item.productBoundary}</span></div><b>查看公开原文 ↗</b></a>)}</div></section>
-      <footer className="site-footer"><p>权衡 · 民事法律期限助手 v1.1</p><span>输出为“计算参考＋风险提示”，不构成确定法律结论。法源核验至 2026-08-23。</span></footer>
+      <footer className="site-footer"><p>权衡 · 民事法律期限助手 {offline ? 'v1.2 离线版' : 'v1.1'}</p><span>输出为“计算参考＋风险提示”，不构成确定法律结论。法源核验至 2026-08-23。</span></footer>
     </main>
   );
 }

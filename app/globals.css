@@ -1,5 +1,3 @@
-@import 'tailwindcss';
-
 :root {
   --paper: #f6f1e8;
   --paper-deep: #eee5d7;
@@ -38,6 +36,7 @@ a { color: inherit; text-decoration: none; }
   border-bottom: 1px solid rgba(221, 212, 199, .9);
   background: rgba(255, 253, 249, .88);
   backdrop-filter: blur(18px);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .topbar-inner {
   width: min(1440px, calc(100% - 48px));
@@ -223,11 +222,14 @@ a { color: inherit; text-decoration: none; }
 }
 @media (max-width: 760px) {
   .topbar-inner, .page-grid, .case-evidence, .site-footer { width: min(100% - 28px, 680px); }
-  .topbar-inner { min-height: 68px; }
-  .brand small { display: none; }
-  .brand strong { font-size: 14px; }
+  .topbar-inner { min-height: 0; padding: 10px 0 11px; flex-direction: column; align-items: stretch; gap: 9px; }
+  .brand { width: 100%; min-width: 0; }
+  .brand small { display: block; }
+  .brand strong { font-size: 14px; line-height: 1.35; }
   .brand-mark { width: 37px; height: 37px; }
-  .mode-switch button { padding: 7px 9px; font-size: 11px; }
+  .top-actions { width: 100%; display: grid; grid-template-columns: 1.15fr .85fr; gap: 7px; }
+  .view-switch, .mode-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .view-switch button, .mode-switch button { width: 100%; padding: 8px 5px; font-size: 11px; }
   .page-grid { display: block; padding: 26px 0 50px; }
   .step-nav { padding: 0; }
   .step-nav .nav-label, .step-nav ol, .privacy-note { display: none; }
@@ -355,7 +357,7 @@ a { color: inherit; text-decoration: none; }
   .view-switch button { padding: 7px 8px; font-size: 10px; }
   .catalog-hero, .v11-grid, .library-shell { width: min(100% - 28px, 680px); }
   .catalog-hero { padding: 35px 0 24px; }
-  .catalog-hero h1 { font-size: 42px; }
+  .catalog-hero h1 { font-size: 38px; }
   .hero-stats strong { font-size: 27px; }
   .v11-grid { display: block; padding-top: 0; }
   .category-panel { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 27px; }
