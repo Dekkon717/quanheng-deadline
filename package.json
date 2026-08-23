@@ -2,6 +2,15 @@
   "name": "quanheng-deadline",
   "version": "1.1.0",
   "private": true,
+  "author": "小林绿子 (https://github.com/Dekkon717)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dekkon717/quanheng-deadline.git"
+  },
+  "homepage": "https://quanheng-deadline.wudongbird.chatgpt.site/",
+  "bugs": {
+    "url": "https://github.com/Dekkon717/quanheng-deadline/issues"
+  },
   "engines": {
     "node": ">=22.13.0"
   },
@@ -21,7 +30,6 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
     "@cloudflare/workers-types": "4.20260515.1",
-    "@openai/sites-vite-plugin": "^0.1.0 || ^0.2.0",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
