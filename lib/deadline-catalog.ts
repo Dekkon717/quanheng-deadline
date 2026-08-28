@@ -5,7 +5,10 @@ export type DeadlineGroup =
   | 'exclusion'
   | 'security'
   | 'procedure'
-  | 'not_limited';
+  | 'not_limited'
+  | 'criminal_prosecution'
+  | 'administrative_litigation'
+  | 'administrative_reconsideration';
 
 export type DurationUnit = 'day' | 'month' | 'year';
 
@@ -28,7 +31,7 @@ export type CalculatorConfig = {
   outerStartHint?: string;
   effectiveFrom?: string;
   transition?: 'ecology-2026';
-  calendar: 'civil' | 'procedure';
+  calendar: 'civil' | 'procedure' | 'criminal' | 'administrative';
 };
 
 export type DeadlineRule = {
@@ -54,6 +57,9 @@ export const DEADLINE_GROUPS: Array<{ id: DeadlineGroup; label: string; descript
   { id: 'security', label: '担保与优先权', description: '保证期间、抵押权、工程价款优先权' },
   { id: 'procedure', label: '诉讼与执行期限', description: '上诉、生效、再审、第三人撤销和申请执行' },
   { id: 'not_limited', label: '不适用诉讼时效', description: '法律明确排除诉讼时效的请求权' },
+  { id: 'criminal_prosecution', label: '刑事追诉期限', description: '按法定最高刑分档计算，并识别不受期限限制情形' },
+  { id: 'administrative_litigation', label: '行政起诉期限', description: '直接起诉、复议后起诉、不履职和最长起诉期限' },
+  { id: 'administrative_reconsideration', label: '行政复议申请期限', description: '六十日申请期、未告知情形与五年/二十年上限' },
 ];
 
 export const DEADLINE_SOURCES: DeadlineSource[] = [
@@ -80,10 +86,17 @@ export const DEADLINE_SOURCES: DeadlineSource[] = [
   { id: 'building-ji', title: '《最高人民法院关于审理建筑物区分所有权纠纷案件适用法律若干问题的解释》', authority: '最高人民法院', effectiveFrom: '2021-01-01', status: '现行有效', url: 'https://gongbao.court.gov.cn/Details/02366bc51bd3f8e9843808ce3eec93.html', verifiedAt: '2026-08-23' },
   { id: 'civil-procedure', title: '《中华人民共和国民事诉讼法》（2023年修正）', authority: '全国人民代表大会常务委员会', effectiveFrom: '2024-01-01', status: '现行有效', url: 'https://cicc.court.gov.cn/html/1/218/62/83/443.html', verifiedAt: '2026-08-23' },
   { id: 'civil-procedure-ji', title: '《最高人民法院关于适用〈中华人民共和国民事诉讼法〉的解释》', authority: '最高人民法院', effectiveFrom: '2022-04-10', status: '现行有效', url: 'https://wb.flk.npc.gov.cn/sfjs/texthtml/0d431c40e88f4a9fac8c4d1dbbefa934.html', verifiedAt: '2026-08-23' },
+  { id: 'criminal-law', title: '《中华人民共和国刑法》（2023年修正）', authority: '全国人民代表大会', effectiveFrom: '2024-03-01', status: '现行有效', url: 'https://fgk.chinatax.gov.cn/zcfgk/c100009/c5212248/content.html', verifiedAt: '2026-08-28' },
+  { id: 'administrative-litigation-law', title: '《中华人民共和国行政诉讼法》（2017年修正）', authority: '全国人民代表大会常务委员会', effectiveFrom: '2017-07-01', status: '现行有效', url: 'https://www.npc.gov.cn/zgrdw/npc/xinwen/2017-06/29/content_2024894.htm', verifiedAt: '2026-08-28' },
+  { id: 'administrative-litigation-ji', title: '《最高人民法院关于适用〈中华人民共和国行政诉讼法〉的解释》', authority: '最高人民法院', effectiveFrom: '2018-02-08', status: '现行有效', url: 'https://gongbao.court.gov.cn/details/ff963094d7a6d678980d4972b5961e.html', verifiedAt: '2026-08-28' },
+  { id: 'administrative-deadline-ji-2026', title: '《最高人民法院关于适用行政诉讼起诉期限若干问题的解释》', authority: '最高人民法院', effectiveFrom: '2026-05-01', status: '现行有效', url: 'https://www.court.gov.cn/zixun/xiangqing/498801.html', verifiedAt: '2026-08-28' },
+  { id: 'administrative-reconsideration-law', title: '《中华人民共和国行政复议法》（2023年修订）', authority: '全国人民代表大会常务委员会', effectiveFrom: '2024-01-01', status: '现行有效', url: 'https://www.npc.gov.cn/WZWSREL25wYy8vLy9jMi9jMzA4MzQvMjAyMzA5L3QyMDIzMDkwMV80MzE0MDkuaHRtbA%3D%3D', verifiedAt: '2026-08-28' },
 ];
 
 const civilCalendar = { calendar: 'civil' as const };
 const procedureCalendar = { calendar: 'procedure' as const };
+const criminalCalendar = { calendar: 'criminal' as const };
+const administrativeCalendar = { calendar: 'administrative' as const };
 
 export const DEADLINE_RULES: DeadlineRule[] = [
   {
@@ -401,6 +414,131 @@ export const DEADLINE_RULES: DeadlineRule[] = [
   {
     id: 'deadline-restoration-10d', title: '耽误民事诉讼期限申请顺延', group: 'procedure', domain: '民事诉讼程序', nature: '申请顺延期限', provision: '民事诉讼法第86条', sourceIds: ['civil-procedure'],
     ruleText: '因不可抗拒事由或者其他正当理由耽误期限的，在障碍消除后十日内可以申请顺延，是否准许由法院决定。', handling: 'conditional', calculator: { duration: { value: 10, unit: 'day' }, startLabel: '障碍消除日', startHint: '系统只算申请窗口，不判断是否存在正当理由。', ...procedureCalendar }, cautions: ['最终是否顺延由人民法院决定。'], keywords: ['顺延', '耽误期限', '十日'],
+  },
+  {
+    id: 'criminal-max-under-5-5y', title: '法定最高刑不满五年：追诉期限五年', group: 'criminal_prosecution', domain: '刑事犯罪追诉', nature: '追诉期限', provision: '刑法第87条第1项、第89条', sourceIds: ['criminal-law'],
+    ruleText: '法定最高刑为不满五年有期徒刑的，经过五年不再追诉；追诉期限从犯罪之日起计算。', handling: 'conditional', calculator: { duration: { value: 5, unit: 'year' }, startLabel: '犯罪之日', startHint: '必须先依据具体罪名、情节和法定刑幅度确认“法定最高刑不满五年”。', ...criminalCalendar },
+    cautions: ['连续犯、继续犯、追诉期限内又犯罪，以及刑法第88条情形不按本卡机械计算。', '法定最高刑不是预计判处的刑期，也不是宣告刑。'], keywords: ['刑事', '追诉时效', '五年', '法定最高刑'],
+  },
+  {
+    id: 'criminal-max-5-under-10-10y', title: '法定最高刑五年以上不满十年：追诉期限十年', group: 'criminal_prosecution', domain: '刑事犯罪追诉', nature: '追诉期限', provision: '刑法第87条第2项、第89条', sourceIds: ['criminal-law'],
+    ruleText: '法定最高刑为五年以上不满十年有期徒刑的，经过十年不再追诉；追诉期限从犯罪之日起计算。', handling: 'conditional', calculator: { duration: { value: 10, unit: 'year' }, startLabel: '犯罪之日', startHint: '“五年以上”包含五年；“不满十年”不包含十年。', ...criminalCalendar },
+    cautions: ['应按依法适用的具体法定刑幅度判断，不得用可能的从轻、减轻结果替代法定最高刑。'], keywords: ['刑事', '追诉时效', '十年', '五年以上'],
+  },
+  {
+    id: 'criminal-max-10-plus-15y', title: '法定最高刑十年以上有期徒刑：追诉期限十五年', group: 'criminal_prosecution', domain: '刑事犯罪追诉', nature: '追诉期限', provision: '刑法第87条第3项、第89条、第99条', sourceIds: ['criminal-law'],
+    ruleText: '法定最高刑为十年以上有期徒刑的，经过十五年不再追诉；刑法所称“以上”包括本数。', handling: 'conditional', calculator: { duration: { value: 15, unit: 'year' }, startLabel: '犯罪之日', startHint: '适用于法定最高刑为十年以上有期徒刑、但不含无期徒刑或死刑的情形。', ...criminalCalendar },
+    cautions: ['若法定最高刑包含无期徒刑或死刑，应改用二十年规则。'], keywords: ['刑事', '追诉时效', '十五年', '十年以上'],
+  },
+  {
+    id: 'criminal-life-death-20y', title: '法定最高刑无期徒刑、死刑：追诉期限二十年', group: 'criminal_prosecution', domain: '刑事犯罪追诉', nature: '追诉期限＋核准追诉', provision: '刑法第87条第4项、第89条', sourceIds: ['criminal-law'],
+    ruleText: '法定最高刑为无期徒刑、死刑的，经过二十年；二十年以后认为必须追诉的，须报请最高人民检察院核准。', handling: 'conditional', calculator: { duration: { value: 20, unit: 'year' }, startLabel: '犯罪之日', startHint: '仅计算二十年基础节点，不判断是否属于必须追诉。', ...criminalCalendar },
+    cautions: ['超过二十年不等于绝对不能追诉；是否报请及是否核准由法定机关依法决定。'], keywords: ['刑事', '追诉时效', '二十年', '无期徒刑', '死刑', '核准追诉'],
+  },
+  {
+    id: 'criminal-continuous-end', title: '连续或继续状态犯罪的起算', group: 'criminal_prosecution', domain: '连续犯、继续犯', nature: '特别起算', provision: '刑法第89条第1款', sourceIds: ['criminal-law'],
+    ruleText: '犯罪行为有连续或者继续状态的，追诉期限从犯罪行为终了之日起计算。', handling: 'manual',
+    cautions: ['是否属于连续状态或继续状态、何时终了以及适用哪个法定刑档，均需结合罪名和事实判断。'], keywords: ['连续犯', '继续犯', '犯罪终了', '起算'],
+  },
+  {
+    id: 'criminal-new-offense-restart', title: '追诉期限内又犯罪的重新起算', group: 'criminal_prosecution', domain: '前罪追诉期限', nature: '重新起算', provision: '刑法第89条第2款', sourceIds: ['criminal-law'],
+    ruleText: '在追诉期限以内又犯罪的，前罪追诉期限从犯后罪之日起计算。', handling: 'manual',
+    cautions: ['必须先判断后罪是否发生在前罪追诉期限内，并分别确认前罪、后罪的犯罪日期和法定刑档。'], keywords: ['又犯罪', '重新起算', '前罪', '后罪'],
+  },
+  {
+    id: 'criminal-escape-no-limit', title: '立案或法院受理后逃避侦查、审判', group: 'criminal_prosecution', domain: '刑事追诉例外', nature: '不受追诉期限限制', provision: '刑法第88条第1款', sourceIds: ['criminal-law'],
+    ruleText: '在人民检察院、公安机关、国家安全机关立案侦查或者人民法院受理案件以后，逃避侦查或者审判的，不受追诉期限限制。', handling: 'manual',
+    cautions: ['“立案侦查”“受理案件”和“逃避侦查或者审判”均需由办案材料证明，不能仅凭长期未归案推定。'], keywords: ['逃避侦查', '逃避审判', '不受限制', '立案'],
+  },
+  {
+    id: 'criminal-victim-report-no-limit', title: '追诉期限内控告而应立案未立案', group: 'criminal_prosecution', domain: '被害人控告', nature: '不受追诉期限限制', provision: '刑法第88条第2款', sourceIds: ['criminal-law'],
+    ruleText: '被害人在追诉期限内提出控告，人民法院、人民检察院、公安机关应当立案而不予立案的，不受追诉期限限制。', handling: 'manual',
+    cautions: ['控告时间、控告内容、受理机关以及是否“应当立案”均需证据和法律判断。'], keywords: ['被害人控告', '应立案未立案', '不受限制'],
+  },
+  {
+    id: 'admin-direct-general-6m', title: '直接提起行政诉讼：一般六个月＋五年上限', group: 'administrative_litigation', domain: '非不动产行政行为', nature: '行政起诉期限', provision: '行政诉讼法第46条；法释〔2026〕3号第2—3条', sourceIds: ['administrative-litigation-law', 'administrative-deadline-ji-2026'],
+    ruleText: '直接起诉的一般期限为六个月，自知道或者应当知道行政行为的内容和实施主体之日起计算；其他案件自行政行为作出之日起超过五年，人民法院不予立案。', handling: 'conditional', calculator: { duration: { value: 6, unit: 'month' }, startLabel: '知道或应当知道行政行为内容和实施主体之日', startHint: '一般以法律文书送达日为重要依据；未制作、未送达时需结合证据认定。', outerDuration: { value: 5, unit: 'year' }, outerStartLabel: '行政行为作出之日', outerStartHint: '非不动产案件的最长起诉期限。', ...administrativeCalendar },
+    cautions: ['法律另有特别起诉期限、复议前置、未告知诉权或期限、期限扣除等情形不能直接套用。'], keywords: ['行政诉讼', '直接起诉', '六个月', '五年', '实施主体'],
+  },
+  {
+    id: 'admin-direct-realestate-6m', title: '因不动产直接起诉：六个月＋二十年上限', group: 'administrative_litigation', domain: '不动产物权变动行政行为', nature: '行政起诉期限', provision: '行政诉讼法第46条；法释〔2026〕3号第2—3条', sourceIds: ['administrative-litigation-law', 'administrative-deadline-ji-2026'],
+    ruleText: '一般六个月从知道或者应当知道行政行为内容和实施主体之日起计算；因行政行为直接导致不动产所有权、用益物权或担保物权设立、变更、转让、消灭的，自行政行为作出之日起超过二十年不予立案。', handling: 'conditional', calculator: { duration: { value: 6, unit: 'month' }, startLabel: '知道或应当知道行政行为内容和实施主体之日', startHint: '须同时明确行政行为内容和实施主体。', outerDuration: { value: 20, unit: 'year' }, outerStartLabel: '行政行为作出之日', outerStartHint: '仅限法释〔2026〕3号第3条界定的因不动产提起诉讼。', ...administrativeCalendar },
+    cautions: ['仅与土地、房屋有关并不当然属于二十年规则，必须是行政行为直接引起特定不动产物权变动。'], keywords: ['行政诉讼', '不动产', '二十年', '六个月', '物权变动'],
+  },
+  {
+    id: 'admin-uninformed-1y', title: '未告知起诉期限：最长一年节点', group: 'administrative_litigation', domain: '行政机关未告知诉权或起诉期限', nature: '最长起诉期限', provision: '行政诉讼法司法解释第64条；法释〔2026〕3号第2条、第6条第2款', sourceIds: ['administrative-litigation-ji', 'administrative-deadline-ji-2026'],
+    ruleText: '行政机关或复议机关应当告知而未告知起诉权利或者期限的，适用最长不得超过一年的规则；该一年从知道或者应当知道行政行为内容和实施主体之日起计算。', handling: 'conditional', calculator: { duration: { value: 1, unit: 'year' }, startLabel: '知道或应当知道行政行为内容和实施主体之日', startHint: '这里只计算最长一年节点，仍须核对何时知道起诉权利和期限。', ...administrativeCalendar },
+    cautions: ['一年是未告知情形的最长节点，并不排除六个月或特别期限更早届满；同时仍受五年/二十年最长期间控制。'], keywords: ['未告知', '诉权', '一年', '行政诉讼'],
+  },
+  {
+    id: 'admin-after-review-15d', title: '不服行政复议相关决定：送达后十五日', group: 'administrative_litigation', domain: '复议决定、不予受理决定、驳回申请决定', nature: '行政起诉期限', provision: '行政诉讼法第45条；法释〔2026〕3号第6条', sourceIds: ['administrative-litigation-law', 'administrative-deadline-ji-2026'],
+    ruleText: '对复议机关作出的不予受理决定、驳回申请决定或复议决定提起诉讼的，期限为十五日，从决定书送达之日起计算；法律另有规定的除外。', handling: 'automatic', calculator: { duration: { value: 15, unit: 'day' }, startLabel: '复议相关决定书送达日', startHint: '以依法送达并可证明的日期为准。', ...administrativeCalendar },
+    cautions: ['复议机关未告知诉权或期限的，应改用未告知规则；法律规定复议终局的不得起诉。'], keywords: ['行政复议', '十五日', '送达', '不予受理', '驳回申请'],
+  },
+  {
+    id: 'admin-review-overdue-15d', title: '复议机关逾期不作决定：期满后十五日', group: 'administrative_litigation', domain: '行政复议逾期未决定', nature: '行政起诉期限', provision: '行政诉讼法第45条', sourceIds: ['administrative-litigation-law'],
+    ruleText: '复议机关逾期不作决定的，申请人可以在复议期限届满之日起十五日内向人民法院提起诉讼；法律另有规定的除外。', handling: 'conditional', calculator: { duration: { value: 15, unit: 'day' }, startLabel: '行政复议法定审理期限届满日', startHint: '须先核对复议审理期限是否依法中止、延长或适用简易程序。', ...administrativeCalendar },
+    cautions: ['复议审理期限本身存在中止或延长时，不得按受理日机械推算。'], keywords: ['复议逾期', '十五日', '不作决定'],
+  },
+  {
+    id: 'admin-failure-duty-6m', title: '行政机关不履行法定职责：六个月', group: 'administrative_litigation', domain: '履职申请、行政不作为', nature: '行政起诉期限', provision: '行政诉讼法第47条；行政诉讼法司法解释第66条；法释〔2026〕3号第7条；行政复议法第23条', sourceIds: ['administrative-litigation-law', 'administrative-litigation-ji', 'administrative-deadline-ji-2026', 'administrative-reconsideration-law'],
+    ruleText: '对履职申请既不答复也不履行职责的，一般可在行政机关接到申请两个月后起诉；起诉应在行政机关履行法定职责期限届满之日起六个月内提出。', handling: 'conditional', calculator: { duration: { value: 6, unit: 'month' }, startLabel: '行政机关履行法定职责期限届满日', startHint: '无特别履职期限时，通常先以行政机关接到申请满两个月作为可起诉节点。', ...administrativeCalendar },
+    cautions: ['现行行政复议法对未履行法定职责原则上设置复议前置，须先核对是否应当申请行政复议。', '紧急保护请求、依职权履职、已有答复或特别履职期限均需另行判断。'], keywords: ['不履职', '行政不作为', '两个月', '六个月', '复议前置'],
+  },
+  {
+    id: 'admin-deadline-delay', title: '行政起诉期限的扣除与延长', group: 'administrative_litigation', domain: '不可抗力、非自身原因、特殊情况', nature: '期限扣除／延长', provision: '行政诉讼法第48条；法释〔2026〕3号第4—5条', sourceIds: ['administrative-litigation-law', 'administrative-deadline-ji-2026'],
+    ruleText: '因不可抗力或其他不属于自身的原因耽误起诉期限，被耽误时间不计算；其他特殊情况可在障碍消除后十日内申请延长，由人民法院决定。', handling: 'manual',
+    cautions: ['行政机关承诺改变行为、参加多元化解、无诉讼行为能力人无代理人等可能构成扣除事由，但需举证；单纯信访维权不当然扣除。'], keywords: ['期限扣除', '延长', '不可抗力', '多元化解', '十日'],
+  },
+  {
+    id: 'admin-incorrect-notice', title: '行政机关错误告知起诉期限', group: 'administrative_litigation', domain: '行政法律文书告知错误', nature: '期限校正规则', provision: '法释〔2026〕3号第5条', sourceIds: ['administrative-deadline-ji-2026'],
+    ruleText: '告知期限长于法定期限并导致耽误的，被耽误时间不计算；告知期限短于法定期限的，按照法定期限执行；多人送达或告知不同的，原则上分别计算。', handling: 'manual',
+    cautions: ['需要逐人核对送达日期、告知内容、实际耽误时间及证据，不能用单一日期计算。'], keywords: ['错误告知', '期限长于', '期限短于', '分别计算'],
+  },
+  {
+    id: 'admin-registration-correction', title: '行政登记身份信息错误的更正之诉', group: 'administrative_litigation', domain: '名称、身份证号码等登记错误', nature: '特别起算', provision: '法释〔2026〕3号第9条', sourceIds: ['administrative-deadline-ji-2026'],
+    ruleText: '有证据证明行政登记中的名称、公民身份号码等身份信息确有错误，行政机关拒绝履行更正职责的，可以从拒绝履行更正职责之日起提起诉讼。', handling: 'manual',
+    cautions: ['本条明确起诉起点但未单独规定固定期间，仍需结合一般期限、复议前置及具体登记法规范判断。'], keywords: ['行政登记', '身份信息', '更正', '拒绝履职'],
+  },
+  {
+    id: 'admin-impersonation-marriage', title: '冒名顶替等虚假身份婚姻登记', group: 'administrative_litigation', domain: '婚姻登记行政诉讼', nature: '特别起算', provision: '法释〔2026〕3号第10条', sourceIds: ['administrative-deadline-ji-2026'],
+    ruleText: '对冒名顶替等利用虚假身份信息办理的婚姻登记，相关当事人可以自知道或者应当知道婚姻登记之日起提起诉讼。', handling: 'manual',
+    cautions: ['是否属于利用虚假身份信息办理婚姻登记及相关当事人范围需个案认定，系统不据此输出确定的“不受期限限制”结论。'], keywords: ['冒名顶替', '虚假身份', '婚姻登记'],
+  },
+  {
+    id: 'admin-appeal-judgment-15d', title: '行政一审判决上诉期限', group: 'administrative_litigation', domain: '行政诉讼一审判决', nature: '法定上诉期限', provision: '行政诉讼法第85条', sourceIds: ['administrative-litigation-law'],
+    ruleText: '当事人不服人民法院第一审判决的，有权在判决书送达之日起十五日内向上一级人民法院提起上诉。', handling: 'automatic', calculator: { duration: { value: 15, unit: 'day' }, startLabel: '一审判决书送达日', startHint: '每名有上诉权当事人的期限应按各自送达日期分别计算。', ...administrativeCalendar },
+    cautions: ['这里计算单个当事人的上诉期限，不直接判断全案生效日期。'], keywords: ['行政上诉', '一审判决', '十五日'],
+  },
+  {
+    id: 'admin-appeal-ruling-10d', title: '行政一审裁定上诉期限', group: 'administrative_litigation', domain: '依法可上诉的行政一审裁定', nature: '法定上诉期限', provision: '行政诉讼法第85条', sourceIds: ['administrative-litigation-law'],
+    ruleText: '当事人不服人民法院第一审裁定的，有权在裁定书送达之日起十日内向上一级人民法院提起上诉。', handling: 'automatic', calculator: { duration: { value: 10, unit: 'day' }, startLabel: '一审裁定书送达日', startHint: '先确认该裁定依法允许上诉。', ...administrativeCalendar },
+    cautions: ['并非所有行政裁定均可上诉。'], keywords: ['行政上诉', '一审裁定', '十日'],
+  },
+  {
+    id: 'admin-review-general-60d', title: '行政复议申请：一般六十日＋五年上限', group: 'administrative_reconsideration', domain: '非不动产行政行为', nature: '行政复议申请期限', provision: '行政复议法第20—21条', sourceIds: ['administrative-reconsideration-law'],
+    ruleText: '一般自知道或者应当知道行政行为之日起六十日内申请行政复议；其他行政复议申请自行政行为作出之日起超过五年的，行政复议机关不予受理。', handling: 'conditional', calculator: { duration: { value: 60, unit: 'day' }, startLabel: '知道或应当知道行政行为之日', startHint: '法律文书送达、公告或其他知悉方式可能影响起算。', outerDuration: { value: 5, unit: 'year' }, outerStartLabel: '行政行为作出之日', outerStartHint: '非不动产行政复议申请的最长受理期限。', ...administrativeCalendar },
+    cautions: ['法律规定申请期限超过六十日的，适用特别规定；不可抗力或其他正当理由可能导致继续计算。'], keywords: ['行政复议', '六十日', '五年'],
+  },
+  {
+    id: 'admin-review-realestate-60d', title: '不动产行政复议：六十日＋二十年上限', group: 'administrative_reconsideration', domain: '因不动产提出行政复议', nature: '行政复议申请期限', provision: '行政复议法第20—21条', sourceIds: ['administrative-reconsideration-law'],
+    ruleText: '一般自知道或者应当知道行政行为之日起六十日内申请；因不动产提出的行政复议申请，自行政行为作出之日起超过二十年的不予受理。', handling: 'conditional', calculator: { duration: { value: 60, unit: 'day' }, startLabel: '知道或应当知道行政行为之日', startHint: '须先确认争议属于因不动产提出的行政复议申请。', outerDuration: { value: 20, unit: 'year' }, outerStartLabel: '行政行为作出之日', outerStartHint: '不动产行政复议申请的最长受理期限。', ...administrativeCalendar },
+    cautions: ['六十日一般期间与二十年最长期间同时适用，不能只看二十年。'], keywords: ['行政复议', '不动产', '六十日', '二十年'],
+  },
+  {
+    id: 'admin-review-uninformed-1y', title: '行政复议未告知：最长一年节点', group: 'administrative_reconsideration', domain: '未告知复议权利、机关和申请期限', nature: '最长申请期限', provision: '行政复议法第20条第3款', sourceIds: ['administrative-reconsideration-law'],
+    ruleText: '行政机关未告知申请行政复议的权利、行政复议机关和申请期限的，申请期限从知道或者应当知道上述事项之日起计算，但自知道或者应当知道行政行为内容之日起最长不得超过一年。', handling: 'conditional', calculator: { duration: { value: 1, unit: 'year' }, startLabel: '知道或应当知道行政行为内容之日', startHint: '这里只计算最长一年节点，实际申请期起算还要核对何时知道复议权利、机关和期限。', ...administrativeCalendar },
+    cautions: ['同时仍受五年/二十年最长受理期限控制。'], keywords: ['行政复议', '未告知', '一年', '复议机关'],
+  },
+  {
+    id: 'admin-review-delay', title: '行政复议申请期限因障碍继续计算', group: 'administrative_reconsideration', domain: '不可抗力或其他正当理由', nature: '期限继续计算', provision: '行政复议法第20条第2款', sourceIds: ['administrative-reconsideration-law'],
+    ruleText: '因不可抗力或者其他正当理由耽误法定申请期限的，申请期限自障碍消除之日起继续计算。', handling: 'manual',
+    cautions: ['“继续计算”不是重新完整计算六十日，必须确定障碍发生前已经经过的天数和障碍存续期间。'], keywords: ['行政复议', '不可抗力', '继续计算', '正当理由'],
+  },
+  {
+    id: 'admin-review-special-term', title: '法律规定超过六十日的复议申请期限', group: 'administrative_reconsideration', domain: '特别行政管理领域', nature: '特别申请期限', provision: '行政复议法第20条第1款但书', sourceIds: ['administrative-reconsideration-law'],
+    ruleText: '法律规定的行政复议申请期限超过六十日的，适用该特别规定。', handling: 'manual',
+    cautions: ['必须先找到具体单行法律的明确期限；法规、规章或执法文书不能随意缩短法律规定的六十日。'], keywords: ['行政复议', '特别期限', '超过六十日'],
   },
   {
     id: 'not-limited-stop', title: '停止侵害、排除妨碍、消除危险', group: 'not_limited', domain: '物权、人格权、侵权', nature: '不适用诉讼时效', provision: '民法典第196条第1项、第995条', sourceIds: ['civil-code'],

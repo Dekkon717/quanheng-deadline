@@ -254,7 +254,7 @@ a { color: inherit; text-decoration: none; }
   .result-wrap { border: 0; box-shadow: none; }
 }
 
-/* v1.1：民事期限规则库 */
+/* v1.2：民事、刑事与行政法律期限规则库 */
 .v11-shell { min-height: 100vh; }
 .top-actions { display: flex; align-items: center; gap: 10px; }
 .view-switch { display: flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.72); }
@@ -271,7 +271,7 @@ a { color: inherit; text-decoration: none; }
 .hero-stats span { margin-top: 10px; color: var(--muted); font-size: 10px; }
 
 .v11-grid { width: min(1440px, calc(100% - 48px)); margin: 0 auto; padding: 20px 0 70px; display: grid; grid-template-columns: 220px minmax(0, 1fr) 260px; gap: 30px; align-items: start; }
-.category-panel { position: sticky; top: 96px; display: grid; gap: 7px; }
+.category-panel { position: sticky; top: 96px; display: grid; gap: 7px; max-height: calc(100vh - 112px); overflow-y: auto; padding-right: 5px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .category-panel .nav-label { margin: 0 0 7px; }
 .category-panel > button { border: 1px solid transparent; border-radius: 13px; padding: 12px 13px; background: transparent; color: var(--ink); text-align: left; }
 .category-panel > button:hover { background: rgba(255,255,255,.68); }
@@ -360,7 +360,7 @@ a { color: inherit; text-decoration: none; }
   .catalog-hero h1 { font-size: 38px; }
   .hero-stats strong { font-size: 27px; }
   .v11-grid { display: block; padding-top: 0; }
-  .category-panel { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 27px; }
+  .category-panel { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; overflow: visible; margin-bottom: 27px; padding-right: 0; }
   .category-panel .nav-label, .category-panel .privacy-note { grid-column: 1 / -1; }
   .category-panel > button { border-color: var(--line); background: rgba(255,255,255,.5); }
   .rule-picker, .library-grid { grid-template-columns: 1fr; }

@@ -139,6 +139,9 @@ export function calculateDeadline(input: DeadlineCalculationInput): DeadlineCalc
   let deadline = baseDeadline;
   if (rule.calculator.outerDuration) {
     if (!input.outerStartDate) return manual(rule, input, ['该规则同时存在最长期间，缺少最长期间的法定起算日期。']);
+    if (input.outerStartDate > input.startDate) {
+      return manual(rule, input, ['最长期间的起算日晚于一般期间起算日，日期关系可能填写错误，需要先核对事实。']);
+    }
     outerDeadline = addDuration(input.outerStartDate, rule.calculator.outerDuration);
     timeline.push({ label: '最长期间届满日', date: outerDeadline, detail: rule.calculator.outerStartHint ?? '按法定最长期间计算。' });
     if (outerDeadline < deadline) {
@@ -150,12 +153,17 @@ export function calculateDeadline(input: DeadlineCalculationInput): DeadlineCalc
   const status = resultStatus(deadline, input.evaluationDate);
   const isAppeal = rule.id === 'appeal-judgment-15d' || rule.id === 'appeal-ruling-10d';
   const effectiveDate = isAppeal ? deadline : undefined;
+  const calendarWarning = rule.calculator.calendar === 'procedure'
+    ? '诉讼期间开始当日不计入；最后一日为法定休假日的，依法顺延。系统当前给出未接入年度放假安排的基础日期。'
+    : rule.calculator.calendar === 'administrative'
+      ? '行政程序期限通常从法定起算事件次日起计；休假日顺延及特别程序规则应在提交材料前向受理机关复核。'
+      : rule.calculator.calendar === 'criminal'
+        ? '系统按公历对应日给出追诉期限基础节点；罪名、法定刑档、犯罪之日及刑法时间效力必须由办案人员复核。'
+        : '按民法典期间规则计算；最后一日为法定休假日的，依法顺延。系统当前给出未接入年度放假安排的基础日期。';
   const warnings = [
     ...rule.cautions,
-    rule.calculator.calendar === 'procedure'
-      ? '期间开始当日不计入；最后一日为法定休假日的，依法顺延。系统当前给出未接入年度放假安排的基础日期。'
-      : '按民法典期间规则计算；最后一日为法定休假日的，依法顺延。系统当前给出未接入年度放假安排的基础日期。',
-    '结果仅为计算参考，不替代法院、仲裁机构对事实、证据和法律适用的认定。',
+    calendarWarning,
+    '结果仅为计算参考，不替代人民法院、检察机关、公安机关、行政复议机关、仲裁机构或其他有权机关对事实、证据和法律适用的认定。',
   ];
 
   if (isAppeal) {
@@ -164,7 +172,11 @@ export function calculateDeadline(input: DeadlineCalculationInput): DeadlineCalc
 
   return {
     outcome: 'calculated', status,
-    headline: status === 'possibly_expired' ? '按当前事实，可能已经超过期间' : status === 'near' ? '期间临近，请尽快处理' : '按当前事实，期间尚未届满',
+    headline: status === 'possibly_expired'
+      ? `按当前事实，可能已经超过${rule.nature}`
+      : status === 'near'
+        ? `${rule.nature}临近，请尽快处理`
+        : `按当前事实，${rule.nature}尚未届满`,
     deadline, baseDeadline, outerDeadline, effectiveDate, evaluationDate: input.evaluationDate,
     rule, sources, timeline, warnings, manualReasons: [],
   };

@@ -46,4 +46,18 @@ export const CASE_REFERENCES: CaseReference[] = [
     productBoundary: '验证占有保护的一年期间与基于所有权的返还原物请求权必须区分。',
     url: 'https://www.court.gov.cn/zixun/xiangqing/16211.html',
   },
+  {
+    title: '最高人民检察院第六批指导性案例：核准追诉案件',
+    authority: '最高人民检察院',
+    point: '指导性案例集中说明超过二十年后是否核准追诉，需要综合犯罪性质、后果、社会影响、证据条件和追诉必要性审查。',
+    productBoundary: '验证二十年只是基础节点；系统不能把“超过二十年”直接输出为绝对不再追诉。',
+    url: 'https://www.spp.gov.cn/xwfbh/wsfbt/201507/t20150708_100967.shtml',
+  },
+  {
+    title: '最高人民法院行政诉讼起诉期限审查规则适用典型案例',
+    authority: '最高人民法院',
+    point: '四个案例分别明确内容和实施主体知悉、不履职起算、行政行为对外生效以及信访不当然扣除期限等问题。',
+    productBoundary: '验证行政起诉期限不能只按行政行为作出日机械计算，信访维权也不当然暂停期限。',
+    url: 'https://www.court.gov.cn/zixun/xiangqing/498791.html',
+  },
 ];
