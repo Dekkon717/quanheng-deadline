@@ -14,7 +14,6 @@ import {
   formatChineseDate,
   type DeadlineCalculationResult,
 } from '../../lib/deadline-engine';
-import { CASE_REFERENCES } from '../../lib/case-references';
 
 const VERIFIED_AT = '2026-08-28';
 
@@ -139,7 +138,7 @@ export default function CalculatorApp({ edition = 'web' }: { edition?: 'web' | '
             </div>
           </>}</section>
 
-          <aside className="source-rail v11-rail"><div className="principle-card"><p className="eyebrow">系统原则</p><h2>没有明确法条，<br />就不自动算。</h2><p>规则只来自现行法律、行政法规和司法解释。案例用于验证边界，不代替成文法。</p></div><div className="rail-card"><div className="section-heading"><h3>当前规则法源</h3><span>官方原文</span></div>{getDeadlineSources(selectedRule.sourceIds).map((source) => <a key={source.id} href={source.url} target="_blank" rel="noreferrer"><span><strong>{source.title}</strong><small>{source.authority} · {source.status}</small></span><span>↗</span></a>)}</div></aside>
+          <aside className="source-rail v11-rail"><div className="principle-card"><p className="eyebrow">系统原则</p><h2>没有明确法条，<br />就不自动算。</h2><p>规则只来自现行法律、行政法规和司法解释；先核对法源，再给出计算参考。</p></div><div className="rail-card"><div className="section-heading"><h3>当前规则法源</h3><span>官方原文</span></div>{getDeadlineSources(selectedRule.sourceIds).map((source) => <a key={source.id} href={source.url} target="_blank" rel="noreferrer"><span><strong>{source.title}</strong><small>{source.authority} · {source.status}</small></span><span>↗</span></a>)}</div></aside>
         </div>
       ) : (
         <section className="library-shell">
@@ -151,7 +150,6 @@ export default function CalculatorApp({ edition = 'web' }: { edition?: 'web' | '
         </section>
       )}
 
-      <section className="case-evidence"><div className="evidence-heading"><div><p className="eyebrow">公开案例校验</p><h2>案例只用于验证规则边界</h2></div><p>以下案例均来自最高人民法院、最高人民检察院等国家机关公开页面；系统不自行补写案号，也不把个案处理结论当作普遍法条。</p></div><div className="evidence-grid">{CASE_REFERENCES.map((item) => <a className="evidence-card" key={item.title} href={item.url} target="_blank" rel="noreferrer"><span className="evidence-authority">{item.authority}</span><h3>{item.title}</h3>{item.docket ? <code>{item.docket}</code> : null}<p>{item.point}</p><div><strong>产品边界</strong><span>{item.productBoundary}</span></div><b>查看公开原文 ↗</b></a>)}</div></section>
       <footer className="site-footer"><p>权衡 · 法律期限助手 {offline ? 'v1.3 离线版' : 'v1.2'}</p><span>输出为“计算参考＋风险提示”，不构成确定法律结论。法源核验至 {VERIFIED_AT}。</span></footer>
     </main>
   );
